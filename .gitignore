@@ -1,18 +1,20 @@
+# Maven output
 target/
+
+# Maven wrapper (исключения)
 !.mvn/wrapper/maven-wrapper.jar
 !**/src/main/**/target/
 !**/src/test/**/target/
-.kotlin
 
-### IntelliJ IDEA ###
-.idea/modules.xml
-.idea/jarRepositories.xml
-.idea/compiler.xml
-.idea/libraries/
-*.iws
+# Kotlin plugin (если вдруг включится)
+.kotlin/
+
+# IntelliJ IDEA (игнорим ВСЮ папку)
+.idea/
 *.iml
+*.iws
 *.ipr
 
-### Mac OS ###
-.DS_Store
-Thumbs.db
+# OS garbage
+.DS_Store       # macOS
+Thumbs.db       # Windows

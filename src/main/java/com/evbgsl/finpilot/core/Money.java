@@ -50,5 +50,10 @@ public record Money(BigDecimal value) {
 
         return this.value().compareTo(other.value());
     }
+
+    @Override
+    public String toString() {
+        return value.toPlainString() + " ₽";
+    }
 }
 

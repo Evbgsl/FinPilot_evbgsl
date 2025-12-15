@@ -15,6 +15,12 @@ public class AuthService {
     }
 
     public void register(String login, String password) {
+        if (login == null || login.isBlank()) {
+            throw new IllegalArgumentException("Логин не может быть пустым");
+        }
+        if (password == null || password.isBlank()) {
+            throw new IllegalArgumentException("Пароль не может быть пустым");
+        }
         if (users.containsKey(login)) {
             throw new IllegalArgumentException("Пользователь с таким логином существует: " + login);
         }
@@ -22,13 +28,24 @@ public class AuthService {
     }
 
     public void login(String login, String password) {
+        if (login == null || login.isBlank()) {
+            throw new IllegalArgumentException("Логин не может быть пустым");
+        }
+
+        if (password == null || password.isBlank()) {
+            throw new IllegalArgumentException("Пароль не может быть пустым");
+        }
         if (!users.containsKey(login)) {
             throw new IllegalArgumentException("Пользователя с таким логином не существует: " + login);
         }
 
         User user = users.get(login);
 
-        if (!user.passwordHash().equals(password)) {
+        if (user == null) {
+            throw new IllegalArgumentException("Пользователя с таким логином не существует: " + login);
+        }
+
+        if (!password.equals(user.passwordHash())) {
             throw new IllegalArgumentException("Неверный пароль");
         }
 
@@ -47,5 +64,11 @@ public class AuthService {
 
     public User getCurrentUser() {
         return currentUser;
+    }
+
+    public void ensureLoggedIn() {
+        if (currentUser == null) {
+            throw new IllegalStateException("You must be logged in.");
+        }
     }
 }

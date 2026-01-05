@@ -6,12 +6,18 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
+import java.util.Map;
+import java.util.HashMap;
+import java.util.Optional;
+
+
 public class Wallet {
     private final String ownerLogin;
     private final List<Transaction> operations;
     private Money balance;
 
     private final Set<Category> categories;
+    private final Map<String, Budget> budgets = new HashMap<>();
 
     public Wallet(String ownerLogin) {
         if (ownerLogin == null || ownerLogin.trim().isEmpty()) {
@@ -60,4 +66,32 @@ public class Wallet {
         list.sort(Comparator.comparing(Category::name));
         return list;
     }
+
+    public boolean hasCategory(String name) {
+        String key = normalize(name);
+        return categories.stream().anyMatch(c -> c.name().equals(key));
+    }
+
+
+    public void setBudget(String category, Money limit) {
+        String key = normalize(category);
+        budgets.put(key, new Budget(key, limit));
+    }
+
+    public Map<String, Budget> getBudgets() {
+        return Map.copyOf(budgets);
+    }
+
+    public Optional<Budget> getBudget(String category) {
+        String key = normalize(category);
+        return Optional.ofNullable(budgets.get(key));
+    }
+
+    private String normalize(String s) {
+        if (s == null) return "";
+        return s.trim().toLowerCase();
+    }
+
+
+
 }

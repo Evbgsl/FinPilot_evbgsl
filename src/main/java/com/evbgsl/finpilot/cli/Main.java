@@ -8,12 +8,17 @@ import com.evbgsl.finpilot.core.Category;
 
 import com.evbgsl.finpilot.service.BudgetService;
 
-
 import java.util.Scanner;
+
+import com.evbgsl.finpilot.service.NotificationService;
+import com.evbgsl.finpilot.service.WalletService;
+
 
 public class Main {
     public static void main(String[] args) {
         AuthService authService = new AuthService();
+        NotificationService notificationService = new NotificationService();
+        WalletService walletService = new WalletService(notificationService);
         CategoryService categoryService = new CategoryService();
         BudgetService budgetService = new BudgetService();
 
@@ -136,8 +141,13 @@ public class Main {
                     String category = parts[2].toLowerCase();
                     Money amount = Money.of(parts[3]);
                     String note = "";
-                    wallet.addExpense(category, amount, note);
+
+                    var notifications = walletService.addExpense(wallet, category, amount, note);
                     System.out.println("Расход добавлен");
+
+                    for (String msg : notifications) {
+                        System.out.println(msg);
+                    }
                 } else if (line.equals("balance")) {
                     authService.ensureLoggedIn();
 

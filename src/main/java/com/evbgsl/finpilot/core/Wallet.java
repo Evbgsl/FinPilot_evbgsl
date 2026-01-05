@@ -10,6 +10,8 @@ import java.util.Map;
 import java.util.HashMap;
 import java.util.Optional;
 
+import java.util.List;
+
 
 public class Wallet {
     private final String ownerLogin;
@@ -46,7 +48,7 @@ public class Wallet {
     }
 
     public List<Transaction> getOperations() {
-        return operations;
+        return List.copyOf(operations);
     }
 
     public String getOwnerLogin() {
@@ -91,6 +93,8 @@ public class Wallet {
         if (s == null) return "";
         return s.trim().toLowerCase();
     }
+
+
 
 
 

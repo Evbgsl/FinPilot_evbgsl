@@ -3,11 +3,17 @@ package com.evbgsl.finpilot.cli;
 import com.evbgsl.finpilot.core.Money;
 import com.evbgsl.finpilot.service.AuthService;
 
+import com.evbgsl.finpilot.service.CategoryService;
+import com.evbgsl.finpilot.core.Category;
+
+
 import java.util.Scanner;
 
 public class Main {
     public static void main(String[] args) {
         AuthService authService = new AuthService();
+        CategoryService categoryService = new CategoryService();
+
 
         System.out.println("FinPilot CLI запущен. Введите 'help' для отображения команд, 'exit' для выхода.");
 
@@ -51,24 +57,39 @@ public class Main {
                 } else if (line.equals("whoami")) {
                     var user = authService.getCurrentUser();
                     System.out.println(user == null ? "Не залогинен" : user.login());
-                }
-                else if (line.startsWith("income add ")) {
+                } else if (line.startsWith("category add ")) {
                     authService.ensureLoggedIn();
-
                     var wallet = authService.getCurrentWallet();
 
+                    String name = line.substring("category add ".length()).trim();
+                    categoryService.addCategory(wallet, name);
+                    System.out.println("Категория добавлена: " + new Category(name).name());
+                } else if (line.equalsIgnoreCase("category list")) {
+                    authService.ensureLoggedIn();
+                    var wallet = authService.getCurrentWallet();
+
+                    var categories = categoryService.listCategories(wallet);
+                    if (categories.isEmpty()) {
+                        System.out.println("Категорий пока нет");
+                    } else {
+                        System.out.println("Категории:");
+                        for (var c : categories) {
+                            System.out.println(" - " + c.name());
+                        }
+                    }
+                } else if (line.startsWith("income add ")) {
+                    authService.ensureLoggedIn();
+                    var wallet = authService.getCurrentWallet();
                     String[] parts = line.trim().split("\\s+");
                     if (parts.length < 4) {
                         System.out.println("Использование: income add <category> <amount>");
                         continue;
                     }
-
                     String category = parts[2].toLowerCase();
                     Money amount = Money.of(parts[3]);
                     String note = ""; // позже сделаем нормальные заметки
                     wallet.addIncome(category, amount, note);
                     System.out.println("Доход добавлен");
-
                 } else if (line.startsWith("expense add ")) {
                     authService.ensureLoggedIn();
 
@@ -107,16 +128,28 @@ public class Main {
     }
 
     public static void printHelp() {
-        System.out.println("Возможные команды");
-        System.out.println("help - для вывода всех возможных команд");
-        System.out.println("exit - для выхода из программы");
-        System.out.println("whoami - для просмотра имени текущего пользователя");
-        System.out.println("register <login> <password> - регистрация нового пользователя");
-        System.out.println("login <login> <password> - вход для текущего пользователя");
-        System.out.println("logout - выход для текущего пользователя");
-        System.out.println("income add <category> <amount> - добавить приход денежных стредств");
-        System.out.println("expense add <category> <amount> - добавить расход денежных стредств");
-        System.out.println("balance - отразить баланс текущего пользователя");
+        System.out.println("Возможные команды:");
+        System.out.println("help                               - показать эту справку");
+        System.out.println("exit                               - выход из программы");
+        System.out.println("whoami                             - показать текущего пользователя");
+
+        System.out.println();
+        System.out.println("Авторизация:");
+        System.out.println("register <login> <password>        - регистрация нового пользователя");
+        System.out.println("login <login> <password>           - вход под пользователем");
+        System.out.println("logout                             - выход из аккаунта");
+
+        System.out.println();
+        System.out.println("Операции:");
+        System.out.println("income add <category> <amount>     - добавить доход");
+        System.out.println("expense add <category> <amount>    - добавить расход");
+        System.out.println("balance                            - показать текущий баланс");
+
+        System.out.println();
+        System.out.println("Категории:");
+        System.out.println("category add <name>                - добавить категорию (можно с пробелами)");
+        System.out.println("category list                      - вывести список категорий");
     }
+
 }
 

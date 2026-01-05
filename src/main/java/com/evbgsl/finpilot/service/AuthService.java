@@ -68,7 +68,7 @@ public class AuthService {
 
     public void ensureLoggedIn() {
         if (currentUser == null) {
-            throw new IllegalStateException("You must be logged in.");
+            throw new IllegalStateException("Сначала войдите: login <login> <password>");
         }
     }
 }

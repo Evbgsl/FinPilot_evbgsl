@@ -12,16 +12,21 @@ import java.util.Scanner;
 
 import com.evbgsl.finpilot.service.NotificationService;
 import com.evbgsl.finpilot.service.WalletService;
+import com.evbgsl.finpilot.infra.FileStorage;
+
+import com.evbgsl.finpilot.infra.UserStorage;
+
 
 
 public class Main {
     public static void main(String[] args) {
-        AuthService authService = new AuthService();
+        FileStorage walletStorage = new FileStorage();
+        UserStorage userStorage = new UserStorage();
+        AuthService authService = new AuthService(walletStorage, userStorage);
         NotificationService notificationService = new NotificationService();
         WalletService walletService = new WalletService(notificationService);
         CategoryService categoryService = new CategoryService();
         BudgetService budgetService = new BudgetService();
-
 
         System.out.println("FinPilot CLI запущен. Введите 'help' для отображения команд, 'exit' для выхода.");
 
@@ -155,6 +160,15 @@ public class Main {
 
                     System.out.println("Текущий баланс: " + wallet.getBalance());
                 } else if (line.equalsIgnoreCase("exit")) {
+                    var wallet = authService.getCurrentWallet();
+                    if (wallet != null) {
+                        walletStorage.save(wallet);
+                        System.out.println("Кошелёк сохранён.");
+                    }
+
+                    authService.saveUsers();
+                    System.out.println("Пользователи сохранены.");
+
                     System.out.println("Выход из программы");
                     break;
                 } else if (line.equalsIgnoreCase("help")) {

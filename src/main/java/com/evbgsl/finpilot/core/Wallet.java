@@ -10,13 +10,9 @@ import java.util.Map;
 import java.util.HashMap;
 import java.util.Optional;
 
-import java.util.List;
-
-
 public class Wallet {
     private final String ownerLogin;
     private final List<Transaction> operations;
-    private Money balance;
 
     private final Set<Category> categories;
     private final Map<String, Budget> budgets = new HashMap<>();
@@ -27,28 +23,40 @@ public class Wallet {
         }
         this.ownerLogin = ownerLogin;
         this.operations = new ArrayList<>();
-        this.balance = Money.of("0");
         this.categories = new HashSet<>();
     }
 
     public void addIncome(String category, Money amount, String note) {
         var t = Transaction.income(category, amount, note);
         operations.add(t);
-        balance = balance.add(t.amount());
     }
 
     public void addExpense(String category, Money amount, String note) {
         var t = Transaction.expense(category, amount, note);
         operations.add(t);
-        balance = balance.subtract(t.amount());
     }
 
     public Money getBalance() {
-        return balance;
+        Money result = Money.zero(); // если у тебя есть zero()
+
+        for (Transaction t : operations) {
+            if (t.type() == TransactionType.INCOME) {
+                result = result.add(t.amount());
+            } else if (t.type() == TransactionType.EXPENSE) {
+                result = result.subtract(t.amount());
+            }
+        }
+        return result;
     }
+
 
     public List<Transaction> getOperations() {
         return List.copyOf(operations);
+    }
+
+    public void addOperationRaw(Transaction t) {
+        if (t == null) return;
+        operations.add(t);
     }
 
     public String getOwnerLogin() {
@@ -93,6 +101,7 @@ public class Wallet {
         if (s == null) return "";
         return s.trim().toLowerCase();
     }
+
 
 
 

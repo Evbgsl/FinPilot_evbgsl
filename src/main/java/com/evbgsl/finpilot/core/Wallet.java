@@ -37,12 +37,12 @@ public class Wallet {
     }
 
     public Money getBalance() {
-        Money result = Money.zero(); // если у тебя есть zero()
+        Money result = Money.zero();
 
-        for (Transaction t : operations) {
-            if (t.type() == TransactionType.INCOME) {
+        for (var t : operations) {
+            if (t.type().isIncomeLike()) {
                 result = result.add(t.amount());
-            } else if (t.type() == TransactionType.EXPENSE) {
+            } else if (t.type().isExpenseLike()) {
                 result = result.subtract(t.amount());
             }
         }
@@ -97,14 +97,22 @@ public class Wallet {
         return Optional.ofNullable(budgets.get(key));
     }
 
-    private String normalize(String s) {
-        if (s == null) return "";
-        return s.trim().toLowerCase();
+    public void addTransferOut(String toLogin, Money amount, String note) {
+        operations.add(Transaction.transferOut("transfer", amount,
+                "to=" + normalize(toLogin) + " " + safeNote(note)));
     }
 
+    public void addTransferIn(String fromLogin, Money amount, String note) {
+        operations.add(Transaction.transferIn("transfer", amount,
+                "from=" + normalize(fromLogin) + " " + safeNote(note)));
+    }
 
+    private String safeNote(String note) {
+        return note == null ? "" : note.trim();
+    }
 
-
-
+    private String normalize(String s) {
+        return s == null ? "" : s.trim().toLowerCase();
+    }
 
 }

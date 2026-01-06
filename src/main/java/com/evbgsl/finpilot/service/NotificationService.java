@@ -38,14 +38,35 @@ public class NotificationService {
         });
 
         // 2) Общий перерасход: расходы > доходов
-        Money totalIncome = sumByType(wallet, TransactionType.INCOME);
-        Money totalExpense = sumByType(wallet, TransactionType.EXPENSE);
+        Money totalIncome = sumIncomeLike(wallet);
+        Money totalExpense = sumExpenseLike(wallet);
+
         if (totalExpense.value().compareTo(totalIncome.value()) > 0) {
             Money diff = totalExpense.subtract(totalIncome);
             notifications.add("Внимание: расходы превысили доходы. Разница: " + diff);
         }
 
         return notifications;
+    }
+
+    private Money sumIncomeLike(Wallet wallet) {
+        BigDecimal sum = BigDecimal.ZERO;
+        for (Transaction t : wallet.getOperations()) {
+            if (t.type().isIncomeLike()) {
+                sum = sum.add(t.amount().value());
+            }
+        }
+        return new Money(sum);
+    }
+
+    private Money sumExpenseLike(Wallet wallet) {
+        BigDecimal sum = BigDecimal.ZERO;
+        for (Transaction t : wallet.getOperations()) {
+            if (t.type().isExpenseLike()) {
+                sum = sum.add(t.amount().value());
+            }
+        }
+        return new Money(sum);
     }
 
     private Money sumExpensesByCategory(Wallet wallet, String category) {
@@ -60,15 +81,6 @@ public class NotificationService {
         return new Money(sum);
     }
 
-    private Money sumByType(Wallet wallet, TransactionType type) {
-        BigDecimal sum = BigDecimal.ZERO;
-        for (Transaction t : wallet.getOperations()) {
-            if (t.type() == type) {
-                sum = sum.add(t.amount().value());
-            }
-        }
-        return new Money(sum);
-    }
 
     private boolean crossed80Percent(Budget budget, Money before, Money after) {
         BigDecimal limit = budget.limit().value();

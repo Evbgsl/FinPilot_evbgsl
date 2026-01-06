@@ -17,7 +17,8 @@ import com.evbgsl.finpilot.infra.FileStorage;
 import com.evbgsl.finpilot.infra.UserStorage;
 
 import com.evbgsl.finpilot.service.ReportService;
-import com.evbgsl.finpilot.cli.TablePrinter;
+import com.evbgsl.finpilot.cli.ReportArgsParser;
+import com.evbgsl.finpilot.service.ReportFilter;
 
 
 
@@ -26,12 +27,26 @@ public class Main {
     public static void main(String[] args) {
         FileStorage walletStorage = new FileStorage();
         UserStorage userStorage = new UserStorage();
-        AuthService authService = new AuthService(walletStorage, userStorage);
         NotificationService notificationService = new NotificationService();
         WalletService walletService = new WalletService(notificationService);
         CategoryService categoryService = new CategoryService();
         BudgetService budgetService = new BudgetService();
         ReportService reportService = new ReportService();
+
+        AuthService authService = new AuthService(walletStorage, userStorage);
+
+        Runtime.getRuntime().addShutdownHook(new Thread(() -> {
+            try {
+                var wallet = authService.getCurrentWallet();
+                if (wallet != null) {
+                    walletStorage.save(wallet);
+                }
+                authService.saveUsers();
+                System.out.println("\n[auto-save] Данные сохранены при завершении программы");
+            } catch (Exception e) {
+                System.out.println("\n[auto-save] Ошибка сохранения: " + e.getMessage());
+            }
+        }));
 
 
         System.out.println("FinPilot CLI запущен. Введите 'help' для отображения команд, 'exit' для выхода.");
@@ -179,22 +194,51 @@ public class Main {
                     break;
                 } else if (line.equalsIgnoreCase("help")) {
                     printHelp();
-                } else if (line.equals("report summary")) {
+                } else if (line.startsWith("report summary")) {
                     authService.ensureLoggedIn();
                     var wallet = authService.getCurrentWallet();
 
-                    var s = reportService.summary(wallet);
+                    ReportFilter filter = ReportArgsParser.parse(line, "report summary");
+
+                    // validate --only
+                    if (filter.hasOnlyCategories()) {
+                        var known = knownCategoriesFromOperations(wallet);
+                        var missing = new java.util.ArrayList<String>();
+                        for (var c : filter.onlyCategories()) {
+                            if (!known.contains(c)) missing.add(c);
+                        }
+                        if (!missing.isEmpty()) {
+                            System.out.println("Категории не найдены: " + String.join(", ", missing));
+                            continue;
+                        }
+                    }
+
+                    var s = reportService.summary(wallet, filter);
                     System.out.println("Итоги:");
                     System.out.println("Общий доход:  " + s.totalIncome());
                     System.out.println("Общий расход: " + s.totalExpense());
                     System.out.println("Баланс:       " + s.balance());
-                } else if (line.equals("report categories")) {
+                } else if (line.startsWith("report categories")) {
                     authService.ensureLoggedIn();
                     var wallet = authService.getCurrentWallet();
 
-                    var rows = reportService.categories(wallet);
+                    ReportFilter filter = ReportArgsParser.parse(line, "report categories");
+
+                    if (filter.hasOnlyCategories()) {
+                        var known = knownCategoriesFromOperations(wallet);
+                        var missing = new java.util.ArrayList<String>();
+                        for (var c : filter.onlyCategories()) {
+                            if (!known.contains(c)) missing.add(c);
+                        }
+                        if (!missing.isEmpty()) {
+                            System.out.println("Категории не найдены: " + String.join(", ", missing));
+                            continue;
+                        }
+                    }
+
+                    var rows = reportService.categories(wallet, filter);
                     if (rows.isEmpty()) {
-                        System.out.println("Нет операций для отчёта по категориям");
+                        System.out.println("Нет данных для отчёта (проверь фильтры)");
                         continue;
                     }
 
@@ -207,13 +251,29 @@ public class Main {
                             java.util.List.of("Категория", "Доход", "Расход"),
                             tableRows
                     );
-                } else if (line.equals("report budgets")) {
+                } else if (line.startsWith("report budgets")) {
                     authService.ensureLoggedIn();
                     var wallet = authService.getCurrentWallet();
 
-                    var rows = reportService.budgets(wallet);
+                    ReportFilter filter = ReportArgsParser.parse(line, "report budgets");
+
+                    if (filter.hasOnlyCategories()) {
+                        // здесь “категория не найдена” логично проверять по бюджету тоже,
+                        // но требование звучит именно про отсутствие категорий, так что проверяем по операциям.
+                        var known = knownCategoriesFromOperations(wallet);
+                        var missing = new java.util.ArrayList<String>();
+                        for (var c : filter.onlyCategories()) {
+                            if (!known.contains(c)) missing.add(c);
+                        }
+                        if (!missing.isEmpty()) {
+                            System.out.println("Категории не найдены: " + String.join(", ", missing));
+                            continue;
+                        }
+                    }
+
+                    var rows = reportService.budgets(wallet, filter);
                     if (rows.isEmpty()) {
-                        System.out.println("Бюджеты не заданы");
+                        System.out.println("Нет данных по бюджетам (или бюджеты не заданы / фильтры отфильтровали всё)");
                         continue;
                     }
 
@@ -240,6 +300,15 @@ public class Main {
             }
         }
     }
+
+    private static java.util.Set<String> knownCategoriesFromOperations(com.evbgsl.finpilot.core.Wallet wallet) {
+        var set = new java.util.HashSet<String>();
+        for (var t : wallet.getOperations()) {
+            if (t.category() != null) set.add(t.category().trim().toLowerCase());
+        }
+        return set;
+    }
+
 
     public static void printHelp() {
         System.out.println("Команды FinPilot:");
@@ -278,6 +347,9 @@ public class Main {
         System.out.println("  report categories                 - отчёт по категориям (доход/расход)");
         System.out.println("  report budgets                    - бюджеты: лимит/потрачено/остаток");
 
+        System.out.println("  report summary [--from yyyy-mm-dd] [--to yyyy-mm-dd] [--only cat1,cat2]");
+        System.out.println("  report categories [--from yyyy-mm-dd] [--to yyyy-mm-dd] [--only cat1,cat2]");
+        System.out.println("  report budgets [--from yyyy-mm-dd] [--to yyyy-mm-dd] [--only cat1,cat2]");
     }
 
 

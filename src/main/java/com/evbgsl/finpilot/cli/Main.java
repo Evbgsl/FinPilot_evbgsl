@@ -16,6 +16,10 @@ import com.evbgsl.finpilot.infra.FileStorage;
 
 import com.evbgsl.finpilot.infra.UserStorage;
 
+import com.evbgsl.finpilot.service.ReportService;
+import com.evbgsl.finpilot.cli.TablePrinter;
+
+
 
 
 public class Main {
@@ -27,6 +31,8 @@ public class Main {
         WalletService walletService = new WalletService(notificationService);
         CategoryService categoryService = new CategoryService();
         BudgetService budgetService = new BudgetService();
+        ReportService reportService = new ReportService();
+
 
         System.out.println("FinPilot CLI запущен. Введите 'help' для отображения команд, 'exit' для выхода.");
 
@@ -173,6 +179,58 @@ public class Main {
                     break;
                 } else if (line.equalsIgnoreCase("help")) {
                     printHelp();
+                } else if (line.equals("report summary")) {
+                    authService.ensureLoggedIn();
+                    var wallet = authService.getCurrentWallet();
+
+                    var s = reportService.summary(wallet);
+                    System.out.println("Итоги:");
+                    System.out.println("Общий доход:  " + s.totalIncome());
+                    System.out.println("Общий расход: " + s.totalExpense());
+                    System.out.println("Баланс:       " + s.balance());
+                } else if (line.equals("report categories")) {
+                    authService.ensureLoggedIn();
+                    var wallet = authService.getCurrentWallet();
+
+                    var rows = reportService.categories(wallet);
+                    if (rows.isEmpty()) {
+                        System.out.println("Нет операций для отчёта по категориям");
+                        continue;
+                    }
+
+                    var tableRows = new java.util.ArrayList<java.util.List<String>>();
+                    for (var r : rows) {
+                        tableRows.add(java.util.List.of(r.category(), r.income().toString(), r.expense().toString()));
+                    }
+
+                    TablePrinter.print(
+                            java.util.List.of("Категория", "Доход", "Расход"),
+                            tableRows
+                    );
+                } else if (line.equals("report budgets")) {
+                    authService.ensureLoggedIn();
+                    var wallet = authService.getCurrentWallet();
+
+                    var rows = reportService.budgets(wallet);
+                    if (rows.isEmpty()) {
+                        System.out.println("Бюджеты не заданы");
+                        continue;
+                    }
+
+                    var tableRows = new java.util.ArrayList<java.util.List<String>>();
+                    for (var r : rows) {
+                        tableRows.add(java.util.List.of(
+                                r.category(),
+                                r.limit().toString(),
+                                r.spent().toString(),
+                                r.remaining().toString()
+                        ));
+                    }
+
+                    TablePrinter.print(
+                            java.util.List.of("Категория", "Лимит", "Потрачено", "Остаток"),
+                            tableRows
+                    );
                 } else {
                     System.out.println("Неизвестная команда: " + line);
                     System.out.println("Введите 'help' для просмотра возможных команд");
@@ -213,6 +271,13 @@ public class Main {
         System.out.println("Бюджеты:");
         System.out.println("  budget set <category> <amount>    - установить бюджет на категорию");
         System.out.println("  budget list                       - вывести список бюджетов");
+
+        System.out.println();
+        System.out.println("Отчёты:");
+        System.out.println("  report summary                    - общий доход/расход/баланс");
+        System.out.println("  report categories                 - отчёт по категориям (доход/расход)");
+        System.out.println("  report budgets                    - бюджеты: лимит/потрачено/остаток");
+
     }
 
 

@@ -107,4 +107,9 @@ public class AuthService {
         return users.containsKey(key);
     }
 
+    public void setCurrentWallet(Wallet wallet) {
+        this.currentWallet = wallet;
+    }
+
+
 }

@@ -21,6 +21,8 @@ import com.evbgsl.finpilot.service.ReportFilter;
 
 import com.evbgsl.finpilot.service.TransferService;
 
+import java.nio.file.Path;
+import java.nio.file.Paths;
 
 
 
@@ -310,6 +312,49 @@ public class Main {
                     transferService.transfer(fromLogin, toLogin, amount);
 
                     System.out.println("Перевод выполнен: " + fromLogin + " -> " + toLogin + " (" + amount + ")");
+                } else if (line.startsWith("export json ")) {
+                    authService.ensureLoggedIn();
+
+                    String[] parts = line.trim().split("\\s+");
+                    if (parts.length < 3) {
+                        System.out.println("Использование: export json <path>");
+                        continue;
+                    }
+
+                    Path path = Paths.get(parts[2]);
+                    var wallet = authService.getCurrentWallet();
+
+                    walletStorage.save(wallet, path);
+                    System.out.println("Экспорт выполнен: " + path.toAbsolutePath());
+                } else if (line.startsWith("import json ")) {
+                    authService.ensureLoggedIn();
+
+                    String[] parts = line.trim().split("\\s+");
+                    if (parts.length < 3) {
+                        System.out.println("Использование: import json <path>");
+                        continue;
+                    }
+
+                    Path path = Paths.get(parts[2]);
+                    var imported = walletStorage.load(path)
+                            .orElseThrow(() -> new IllegalArgumentException("Файл не найден или пустой: " + path));
+
+                    String currentLogin = authService.getCurrentUser().login().trim().toLowerCase();
+                    String importedLogin = imported.getOwnerLogin().trim().toLowerCase();
+
+                    if (!importedLogin.equals(currentLogin)) {
+                        System.out.println("Ошибка: кошелёк в файле принадлежит '" + importedLogin +
+                                "', а вы залогинены как '" + currentLogin + "'");
+                        continue;
+                    }
+
+                    // подменяем текущий кошелёк в памяти
+                    authService.setCurrentWallet(imported);
+
+                    // и сохраняем в стандартное хранилище wallets/<login>.json
+                    walletStorage.save(imported);
+
+                    System.out.println("Импорт выполнен: " + path.toAbsolutePath());
                 } else if (line.equals("ops")) {
                     authService.ensureLoggedIn();
                     authService.getCurrentWallet().getOperations()
@@ -377,6 +422,11 @@ public class Main {
         System.out.println("  report summary [--from yyyy-mm-dd] [--to yyyy-mm-dd] [--only cat1,cat2]");
         System.out.println("  report categories [--from yyyy-mm-dd] [--to yyyy-mm-dd] [--only cat1,cat2]");
         System.out.println("  report budgets [--from yyyy-mm-dd] [--to yyyy-mm-dd] [--only cat1,cat2]");
+
+        System.out.println();
+        System.out.println("Импорт/экспорт:");
+        System.out.println("export json <path>                  - экспорт текущего кошелька в JSON");
+        System.out.println("import json <path>                  - импорт кошелька из JSON (для текущего пользователя)");
     }
 
 

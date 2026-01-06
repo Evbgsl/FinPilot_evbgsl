@@ -21,4 +21,8 @@ Thumbs.db       # Windows
 
 wallets/*.json
 
+# exports / backups
+backup.json
+*.backup.json
+
 

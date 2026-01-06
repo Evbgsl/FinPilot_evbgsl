@@ -34,36 +34,58 @@ public class FileStorage {
 
     public void save(Wallet wallet) {
         if (wallet == null) return;
-
         try {
             Files.createDirectories(baseDir);
-            Path file = baseDir.resolve(wallet.getOwnerLogin() + ".json");
+        } catch (IOException e) {
+            throw new IllegalStateException("Не удалось создать папку wallets: " + e.getMessage(), e);
+        }
+        Path file = baseDir.resolve(wallet.getOwnerLogin() + ".json");
+        save(wallet, file);
+    }
+
+    public void save(Wallet wallet, Path path) {
+        if (wallet == null) return;
+        if (path == null) throw new IllegalArgumentException("path is null");
+
+        try {
+            Path parent = path.toAbsolutePath().getParent();
+            if (parent != null) {
+                Files.createDirectories(parent);
+            }
 
             WalletDto dto = WalletMapper.toDto(wallet);
             String json = gson.toJson(dto);
 
-            Files.writeString(file, json, StandardCharsets.UTF_8,
+            Files.writeString(path, json, StandardCharsets.UTF_8,
                     StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING);
 
         } catch (IOException e) {
-            throw new IllegalStateException("Не удалось сохранить кошелёк: " + e.getMessage(), e);
+            throw new IllegalStateException("Не удалось сохранить файл: " + path + " (" + e.getMessage() + ")", e);
         }
     }
 
     public Optional<Wallet> load(String login) {
         if (login == null || login.trim().isEmpty()) return Optional.empty();
+        Path file = baseDir.resolve(login.trim().toLowerCase() + ".json");
+        return load(file);
+    }
+
+    public Optional<Wallet> load(Path path) {
+        if (path == null) return Optional.empty();
 
         try {
-            Path file = baseDir.resolve(login.trim().toLowerCase() + ".json");
-            if (!Files.exists(file)) return Optional.empty();
+            if (!Files.exists(path)) return Optional.empty();
 
-            String json = Files.readString(file, StandardCharsets.UTF_8);
+            String json = Files.readString(path, StandardCharsets.UTF_8);
             WalletDto dto = gson.fromJson(json, WalletDto.class);
+            if (dto == null) return Optional.empty();
 
             return Optional.of(WalletMapper.fromDto(dto));
 
         } catch (IOException e) {
-            throw new IllegalStateException("Не удалось загрузить кошелёк: " + e.getMessage(), e);
+            throw new IllegalStateException("Не удалось прочитать файл: " + path + " (" + e.getMessage() + ")", e);
         }
     }
+
+
 }

@@ -101,4 +101,10 @@ public class AuthService {
             throw new IllegalStateException("Сначала войдите: login <login> <password>");
         }
     }
+
+    public boolean userExists(String login) {
+        String key = normalize(login);
+        return users.containsKey(key);
+    }
+
 }

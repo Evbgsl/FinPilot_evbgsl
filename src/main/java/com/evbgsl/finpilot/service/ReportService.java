@@ -11,18 +11,39 @@ import java.util.*;
 public class ReportService {
 
     public ReportSummary summary(Wallet wallet) {
-        Money income = sumByType(wallet, TransactionType.INCOME);
-        Money expense = sumByType(wallet, TransactionType.EXPENSE);
+        return summary(wallet, null);
+    }
+
+    public ReportSummary summary(Wallet wallet, ReportFilter filter) {
+        Money income = sumIncomeLike(wallet, filter);
+        Money expense = sumExpenseLike(wallet, filter);
         Money balance = income.subtract(expense);
         return new ReportSummary(income, expense, balance);
     }
 
-    public ReportSummary summary(Wallet wallet, ReportFilter filter) {
-        Money income = sumByType(wallet, TransactionType.INCOME, filter);
-        Money expense = sumByType(wallet, TransactionType.EXPENSE, filter);
-        Money balance = income.subtract(expense);
-        return new ReportSummary(income, expense, balance);
+    private Money sumIncomeLike(Wallet wallet, ReportFilter filter) {
+        Money sum = Money.zero();
+        for (Transaction t : filteredOperations(wallet, filter)) {
+            if (t.type().isIncomeLike()) {
+                sum = sum.add(t.amount());
+            }
+        }
+        return sum;
     }
+
+    private Money sumExpenseLike(Wallet wallet, ReportFilter filter) {
+        Money sum = Money.zero();
+        for (Transaction t : filteredOperations(wallet, filter)) {
+            if (t.type().isExpenseLike()) {
+                sum = sum.add(t.amount());
+            }
+        }
+        return sum;
+    }
+
+
+
+
 
     public List<CategoryRow> categories(Wallet wallet) {
         Map<String, Totals> map = new TreeMap<>();
@@ -31,11 +52,12 @@ public class ReportService {
             String cat = normalize(t.category());
             Totals totals = map.computeIfAbsent(cat, k -> new Totals());
 
-            if (t.type() == TransactionType.INCOME) {
+            if (t.type().isIncomeLike()) {
                 totals.income = totals.income.add(t.amount());
-            } else if (t.type() == TransactionType.EXPENSE) {
+            } else if (t.type().isExpenseLike()) {
                 totals.expense = totals.expense.add(t.amount());
             }
+
         }
 
         List<CategoryRow> rows = new ArrayList<>();
@@ -52,11 +74,12 @@ public class ReportService {
             String cat = normalize(t.category());
             Totals totals = map.computeIfAbsent(cat, k -> new Totals());
 
-            if (t.type() == TransactionType.INCOME) {
+            if (t.type().isIncomeLike()) {
                 totals.income = totals.income.add(t.amount());
-            } else if (t.type() == TransactionType.EXPENSE) {
+            } else if (t.type().isExpenseLike()) {
                 totals.expense = totals.expense.add(t.amount());
             }
+
         }
 
         List<CategoryRow> rows = new ArrayList<>();
@@ -124,16 +147,6 @@ public class ReportService {
 
         rows.sort(Comparator.comparing(BudgetRow::category));
         return rows;
-    }
-
-    private Money sumByType(Wallet wallet, TransactionType type) {
-        Money sum = Money.zero();
-        for (Transaction t : wallet.getOperations()) {
-            if (t.type() == type) {
-                sum = sum.add(t.amount());
-            }
-        }
-        return sum;
     }
 
     private String normalize(String s) {

@@ -17,8 +17,9 @@ import com.evbgsl.finpilot.infra.FileStorage;
 import com.evbgsl.finpilot.infra.UserStorage;
 
 import com.evbgsl.finpilot.service.ReportService;
-import com.evbgsl.finpilot.cli.ReportArgsParser;
 import com.evbgsl.finpilot.service.ReportFilter;
+
+import com.evbgsl.finpilot.service.TransferService;
 
 
 
@@ -27,13 +28,14 @@ public class Main {
     public static void main(String[] args) {
         FileStorage walletStorage = new FileStorage();
         UserStorage userStorage = new UserStorage();
+        AuthService authService = new AuthService(walletStorage, userStorage);
+        TransferService transferService = new TransferService(authService, walletStorage);
         NotificationService notificationService = new NotificationService();
         WalletService walletService = new WalletService(notificationService);
         CategoryService categoryService = new CategoryService();
         BudgetService budgetService = new BudgetService();
         ReportService reportService = new ReportService();
 
-        AuthService authService = new AuthService(walletStorage, userStorage);
 
         Runtime.getRuntime().addShutdownHook(new Thread(() -> {
             try {
@@ -291,6 +293,27 @@ public class Main {
                             java.util.List.of("Категория", "Лимит", "Потрачено", "Остаток"),
                             tableRows
                     );
+                } else if (line.startsWith("transfer to ")) {
+                    authService.ensureLoggedIn();
+
+                    String[] parts = line.trim().split("\\s+");
+                    if (parts.length < 4) {
+                        System.out.println("Использование: transfer to <login> <amount>");
+                        continue;
+                    }
+
+                    String toLogin = parts[2].toLowerCase();
+                    Money amount = Money.of(parts[3]);
+
+                    String fromLogin = authService.getCurrentUser().login();
+
+                    transferService.transfer(fromLogin, toLogin, amount);
+
+                    System.out.println("Перевод выполнен: " + fromLogin + " -> " + toLogin + " (" + amount + ")");
+                } else if (line.equals("ops")) {
+                    authService.ensureLoggedIn();
+                    authService.getCurrentWallet().getOperations()
+                            .forEach(System.out::println);
                 } else {
                     System.out.println("Неизвестная команда: " + line);
                     System.out.println("Введите 'help' для просмотра возможных команд");
@@ -340,6 +363,10 @@ public class Main {
         System.out.println("Бюджеты:");
         System.out.println("  budget set <category> <amount>    - установить бюджет на категорию");
         System.out.println("  budget list                       - вывести список бюджетов");
+
+        System.out.println();
+        System.out.println("Переводы:");
+        System.out.println("  transfer to <login> <amount>      - перевод другому пользователю");
 
         System.out.println();
         System.out.println("Отчёты:");

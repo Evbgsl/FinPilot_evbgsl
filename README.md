@@ -65,8 +65,8 @@ mvn spotless:apply
 
 По умолчанию данные сохраняются локально:
 
-- `wallets/<login>.json` — кошелёк пользователя
-- `wallets/users.json` — список пользователей
+- `wallets/<login>.json` - кошелёк пользователя
+- `wallets/users.json` - список пользователей
 
 Файлы создаются автоматически при работе приложения.
 
@@ -75,30 +75,30 @@ mvn spotless:apply
 ## Команды CLI
 
 ### Общие
-- `help` — показать справку
-- `exit` — выход из приложения (с сохранением данных)
-- `whoami` — показать текущего пользователя
+- `help` - показать справку
+- `exit` - выход из приложения (с сохранением данных)
+- `whoami` - показать текущего пользователя
 
 ### Авторизация
-- `register <login> <password>` — регистрация
-- `login <login> <password>` — вход
-- `logout` — выход из аккаунта
+- `register <login> <password>` - регистрация
+- `login <login> <password>` - вход
+- `logout` - выход из аккаунта
 
 ### Категории
-- `category add <name>` — добавить категорию
-- `category list` — список категорий
+- `category add <name>` - добавить категорию
+- `category list` - список категорий
 
 ### Бюджеты
-- `budget set <category> <amount>` — установить бюджет
-- `budget list` — список бюджетов
+- `budget set <category> <amount>` - установить бюджет
+- `budget list` - список бюджетов
 
 ### Операции
-- `income add <category> <amount>` — добавить доход
-- `expense add <category> <amount>` — добавить расход
-- `balance` — текущий баланс
+- `income add <category> <amount>` - добавить доход
+- `expense add <category> <amount>` - добавить расход
+- `balance` - текущий баланс
 
 ### Переводы
-- `transfer to <login> <amount>` — перевод средств другому пользователю
+- `transfer to <login> <amount>` - перевод средств другому пользователю
 
 ### Отчёты
 - `report summary [--from yyyy-mm-dd] [--to yyyy-mm-dd] [--only cat1,cat2]`
@@ -106,8 +106,8 @@ mvn spotless:apply
 - `report budgets [--from yyyy-mm-dd] [--to yyyy-mm-dd] [--only cat1,cat2]`
 
 ### Экспорт / импорт
-- `export json <path>` — экспорт текущего кошелька в JSON
-- `import json <path>` — импорт кошелька из JSON (для текущего пользователя)
+- `export json <path>` - экспорт текущего кошелька в JSON
+- `import json <path>` - импорт кошелька из JSON (для текущего пользователя)
 
 ---
 

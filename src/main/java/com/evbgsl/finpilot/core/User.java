@@ -22,9 +22,8 @@ public record User(String login, String passwordHash) {
       throw new IllegalArgumentException("Пароль не должен быть пустым");
     }
 
-    // Пока просто храним строку как есть
     String normalizedLogin = login.trim();
-    String passwordHash = rawPassword; // потом заменим на hash(rawPassword)
+    String passwordHash = rawPassword;
 
     return new User(normalizedLogin, passwordHash);
   }

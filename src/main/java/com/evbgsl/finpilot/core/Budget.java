@@ -8,7 +8,6 @@ public record Budget(String category, Money limit) {
     if (limit == null) {
       throw new IllegalArgumentException("Лимит бюджета не может быть null");
     }
-    // можно запретить отрицательные и ноль (обычно бюджет должен быть > 0)
     if (limit.value().signum() <= 0) {
       throw new IllegalArgumentException("Лимит бюджета должен быть больше 0");
     }

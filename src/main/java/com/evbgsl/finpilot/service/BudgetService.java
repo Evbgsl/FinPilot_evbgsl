@@ -17,8 +17,6 @@ public class BudgetService {
       throw new IllegalArgumentException("Категория не может быть пустой");
     }
 
-    // Если у тебя есть категории в кошельке, делаем проверку.
-    // Если категорий пока нет — просто закомментируй этот блок.
     if (!wallet.hasCategory(name)) {
       throw new IllegalArgumentException("Категория не найдена: " + name);
     }

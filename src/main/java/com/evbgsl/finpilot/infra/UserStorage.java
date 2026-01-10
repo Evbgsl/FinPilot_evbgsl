@@ -66,7 +66,6 @@ public class UserStorage {
 
       UsersDto dto = new UsersDto();
       if (users != null) {
-        // стабильно пишем в одном порядке (приятно для git и глаз)
         users.keySet().stream()
             .sorted()
             .forEach(

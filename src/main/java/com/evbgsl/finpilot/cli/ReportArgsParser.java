@@ -7,7 +7,6 @@ import java.util.*;
 
 public class ReportArgsParser {
 
-  // basePrefix пример: "report summary"
   public static ReportFilter parse(String line, String basePrefix) {
     String rest = line.substring(basePrefix.length()).trim();
     if (rest.isEmpty()) {

@@ -416,10 +416,12 @@ public class Main {
     System.out.println("  report categories                 - отчёт по категориям (доход/расход)");
     System.out.println("  report budgets                    - бюджеты: лимит/потрачено/остаток");
 
-    System.out.println("  report summary [--from yyyy-mm-dd] [--to yyyy-mm-dd] [--only cat1,cat2]");
     System.out.println(
-        "  report categories [--from yyyy-mm-dd] [--to yyyy-mm-dd] [--only cat1,cat2]");
-    System.out.println("  report budgets [--from yyyy-mm-dd] [--to yyyy-mm-dd] [--only cat1,cat2]");
+        "  report summary [--from yyyy-mm-dd] [--to yyyy-mm-dd] [--only cat1,cat2]               - общий доход/расход/баланс c фильтрацией");
+    System.out.println(
+        "  report categories [--from yyyy-mm-dd] [--to yyyy-mm-dd] [--only cat1,cat2]            - отчёт по категориям (доход/расход) с фильтрацией");
+    System.out.println(
+        "  report budgets [--from yyyy-mm-dd] [--to yyyy-mm-dd] [--only cat1,cat2]               - бюджеты: лимит/потрачено/остаток с фильтрацией");
 
     System.out.println();
     System.out.println("Импорт/экспорт:");

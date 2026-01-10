@@ -62,7 +62,7 @@ public class Wallet {
   }
 
   public void addCategory(String name) {
-    Category category = new Category(name); // тут внутри trim/lower/валидация
+    Category category = new Category(name);
     boolean added = categories.add(category);
     if (!added) {
       throw new IllegalArgumentException("Категория уже существует: " + category.name());

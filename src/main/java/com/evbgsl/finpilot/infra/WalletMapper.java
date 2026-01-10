@@ -9,7 +9,7 @@ public class WalletMapper {
     WalletDto dto = new WalletDto();
     dto.ownerLogin = wallet.getOwnerLogin();
     dto.operations.addAll(wallet.getOperations());
-    dto.categories.addAll(wallet.getCategories()); // см. ниже про getCategories()
+    dto.categories.addAll(wallet.getCategories());
     dto.budgets.putAll(wallet.getBudgets());
     return dto;
   }
@@ -33,7 +33,7 @@ public class WalletMapper {
 
     // операции
     for (var t : dto.operations) {
-      wallet.addOperationRaw(t); // см. ниже про addOperationRaw()
+      wallet.addOperationRaw(t);
     }
 
     return wallet;
